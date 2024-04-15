@@ -92,7 +92,7 @@ zone_example = {'sample_zone': [[64, 64, 64, 64, 64, 64, 64, 65, 65, 65, 65, 65,
                                 np.array([[-20.54, 227.56], [23.80, 186.64]]),
                                 np.array([[-23.80, 224.06], [20.17, 183.60]])]}
 
-traj_set = {'straight': None}
+traj_set = {'left': None}
 tic = time.time()
 
 while True:
@@ -107,8 +107,7 @@ while True:
 
     # -- CALCULATE PATHS FOR NEXT TIMESTAMP ----------------------------------------------------------------------------
     ltpl_obj.calc_paths(prev_action_id=sel_action,
-                        object_list=obj_list,
-                        blocked_zones=zone_example)
+                        object_list=obj_list)
 
     # -- GET POSITION AND VELOCITY ESTIMATE OF EGO-VEHICLE -------------------------------------------------------------
     # (here: simulation dummy, replace with actual sensor readings)
