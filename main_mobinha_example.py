@@ -7,7 +7,7 @@ os.environ['OPENBLAS_NUM_THREADS'] = str(1)
 import rospy
 from geometry_msgs.msg import Pose,Vector3
 from std_msgs.msg import Int8, Float32MultiArray
-from visualization_msgs.msg import Marker
+from visualization_msgs.msg import Marker, MarkerArray
 from geometry_msgs.msg import Point as GPoint
 from geometry_msgs.msg import PoseArray
 
@@ -56,12 +56,13 @@ class LTPL:
         self.set_protocol()
 
         print("Init Obstacle")
-        obj_list_dummy = graph_ltpl.testing_tools.src.objectlist_dummy.ObjectlistDummy(dynamic=True,
-                                                                                    vel_scale=0.3,
-                                                                                    s0=250.0)
+        obj_list_dummy = graph_ltpl.testing_tools.src.objectlist_dummy.ObjectlistDummy(dynamic=False,
+                                                                                    vel_scale=1,
+                                                                                    s0=0.0)
         
         self.vehicle_state = None
         self.mode = 0
+        self.obstacles = []
         if self.check_vehicle_state():
             print("Init Vehicle Position")
             pos_est = self.vehicle_state[0:2]
@@ -73,16 +74,15 @@ class LTPL:
         traj_set = {'left': None}
         print("Start Planning")
 
-        rate = rospy.Rate(20)
+        rate = rospy.Rate(50)
         while not rospy.is_shutdown():
         
             for sel_action in ["left", "right", "follow", "straight"]:
                 if sel_action in traj_set.keys():
                     break
 
-            obj_list = obj_list_dummy.get_objectlist()
-
-            self.ltpl_obj.calc_paths(prev_action_id=sel_action, object_list=[])#obj_list)
+            obj_list = self.obstacles
+            self.ltpl_obj.calc_paths(prev_action_id=sel_action, object_list=obj_list)
             
             if traj_set[sel_action] is not None:
                 local_action_set = traj_set[sel_action][0][:, :]
@@ -90,12 +90,15 @@ class LTPL:
   
             traj_set = self.ltpl_obj.calc_vel_profile(pos_est=self.vehicle_state[0:2],vel_est=self.vehicle_state[3],vel_max=25)[0]
 
+            self.ltpl_obj.visual()
             rate.sleep()
+
 
 
     def set_protocol(self):
         rospy.Subscriber('/car/pose', Pose, self.pose_cb)
         rospy.Subscriber('/mode', Int8, self.mode_cb)
+        rospy.Subscriber('/simulator/obstacle', MarkerArray, self.obstacle_cb)
         self.local_action_set_pub = rospy.Publisher('/ltpl/local_action_set', PoseArray, queue_size=1)
 
     def pose_cb(self, msg):
@@ -104,6 +107,15 @@ class LTPL:
 
     def mode_cb(self, msg):
         self.mode = msg.data
+
+    def obstacle_cb(self, msg):
+        obs = []
+
+        for i, marker in enumerate(msg.markers):
+            obs.append({'X': marker.pose.position.x, 'Y': marker.pose.position.y, 'theta': 10, 'type': 'physical',
+                         'id': i, 'length': 5.0, 'v': 15})
+        self.obstacles = obs
+
 
     def conver_to_enu(self, lat, lng):
         x, y, _ = pm.geodetic2enu(lat, lng, 20, self.base_lla[0], self.base_lla[1], self.base_lla[2])

@@ -97,7 +97,6 @@ class ObjectListInterface(object):
 
             for object_el in object_list:
                 if object_el['type'] in KNOWN_OBJ_TYPES:
-
                     # check for car objects
                     if object_el['type'] == "physical":
 
@@ -108,7 +107,6 @@ class ObjectListInterface(object):
                                 check_inside_bounds(bound1=self.__bound1,
                                                     bound2=self.__bound2,
                                                     pos=[object_el['X'], object_el['Y']])
-
                         if on_track:
                             # add prediction
                             # NOTE: since the spatial and temporal domain are decoupled, the selected nodes here are
