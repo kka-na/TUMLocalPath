@@ -87,11 +87,12 @@ obj_list_dummy = graph_ltpl.testing_tools.src.objectlist_dummy.ObjectlistDummy(d
 #        * blocked node numbers (in the graph) - pairwise with blocked layer numbers
 #        * numpy array holding coordinates of left bound of region (columns x and y)
 #        * numpy array holding coordinates of right bound of region (columns x and y)
-zone_example = {'sample_zone': [[64, 64, 64, 64, 64, 64, 64, 65, 65, 65, 65, 65, 65, 65, 66, 66, 66, 66, 66, 66, 66],
-                                [0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6],
-                                np.array([[-20.54, 227.56], [23.80, 186.64]]),
-                                np.array([[-23.80, 224.06], [20.17, 183.60]])]}
 
+pos = [(-146.977, 220.238), (-293.271, 380.288), (-539.258, 659.329), (-359.330, 463.394), (-247.289, 340.765)]
+obj_list = []
+for i,p in enumerate( pos):
+    obj_list.append({'X': p[0], 'Y': p[1], 'theta': 10, 'type': 'physical','id': i, 'length': 5.0, 'v': 15})
+                
 traj_set = {'left': None}
 tic = time.time()
 
@@ -101,9 +102,6 @@ while True:
     for sel_action in ["right", "left", "straight", "follow"]:  # try to force 'right', else try next in list
         if sel_action in traj_set.keys():
             break
-
-    # get simple object list (one vehicle driving around the track)
-    obj_list = obj_list_dummy.get_objectlist()
 
     # -- CALCULATE PATHS FOR NEXT TIMESTAMP ----------------------------------------------------------------------------
     ltpl_obj.calc_paths(prev_action_id=sel_action,
@@ -119,16 +117,8 @@ while True:
                       last_vel_course=(traj_set[sel_action][0][:, 5]),
                       iter_time=time.time() - tic)
     tic = time.time()
-
-    # -- CALCULATE VELOCITY PROFILE AND RETRIEVE TRAJECTORIES ----------------------------------------------------------
     traj_set = ltpl_obj.calc_vel_profile(pos_est=pos_est,
-                                         vel_est=vel_est)[0]
-
-    # -- SEND TRAJECTORIES TO CONTROLLER -------------------------------------------------------------------------------
-    # select a trajectory from the set and send it to the controller here
-
-    # -- LOGGING -------------------------------------------------------------------------------------------------------
-    ltpl_obj.log()
+                                         vel_est=vel_est,vel_max=25)[0]
 
     # -- LIVE PLOT (if activated - not recommended for performance use) ------------------------------------------------
     ltpl_obj.visual()
